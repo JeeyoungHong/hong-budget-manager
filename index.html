@@ -53,6 +53,10 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:4px 12px 24px
 @media(max-width:390px){main{padding-left:10px;padding-right:10px}.panel{padding:12px}.panel-head{gap:6px}.panel-head h2{font-size:15px}.panel-head .sub{font-size:11px}.panel-head>button{font-size:11px;padding:9px 7px}.stat{padding:11px}.stat small{font-size:11px}.stat strong{font-size:15px}.grid2{gap:8px}.account-card .mini{font-size:10px;padding:6px 5px}.account-balance{font-size:12px}.item{gap:7px}.item-amount{font-size:13px}}
 @media(min-width:620px){main{padding-top:22px}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}.two-col .panel{margin-bottom:14px}}
 </style>
+
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
 </head>
 <body>
 <header>
@@ -275,6 +279,14 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:4px 12px 24px
   if(currentAccount()&&!data.selectedMonthId)data.selectedMonthId=currentAccount().months[0]?.id||null;
   render();
 })();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
 </script>
 </body>
 </html>
