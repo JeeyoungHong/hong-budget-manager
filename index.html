@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#253b35">
+<title>My Personal Budget</title>
+<style>
+:root{--bg:#f4f6f3;--card:#fff;--ink:#1f2b26;--muted:#77817b;--line:#e3e8e3;--green:#2d5948;--mint:#e7f1eb;--orange:#b86b35;--red:#b34e4e}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif;font-size:15px}
+button,input,textarea,select{font:inherit} button{cursor:pointer;border:0;border-radius:12px;padding:10px 11px;background:var(--green);color:#fff;font-weight:650;font-size:14px;line-height:1.2;white-space:nowrap}
+button.secondary{background:#eef2ee;color:var(--green);border:1px solid var(--line)} button.danger{background:#fff0ee;color:var(--red);border:1px solid #f2d5d1}
+header{background:var(--green);color:white;padding:18px 18px 18px;border-radius:0 0 24px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:0}
+header .eyebrow{font-size:12px;opacity:.78;letter-spacing:.08em;padding-top:3px}
+.notice-trigger{flex:0 0 30px;width:30px;height:30px;padding:0;border:1px solid #ffffff75;border-radius:50%;background:transparent;color:#fff;font-size:18px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1}
+.notice-trigger:active{background:#ffffff20}
+.modal-backdrop{position:fixed;inset:0;z-index:1000;background:#14231dcc;display:flex;align-items:center;justify-content:center;padding:22px}
+.notice-modal{width:100%;max-width:420px;background:#fffaf0;color:#855d24;border:1px solid #f1e0bd;border-radius:18px;padding:20px;box-shadow:0 18px 50px #0003}
+.notice-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;color:#6f4d20;font-weight:750;font-size:16px}
+.notice-modal p{font-size:14px;line-height:1.75;margin:0 0 18px}
+.notice-modal .modal-close{min-width:84px}
+main{max-width:760px;margin:auto;padding:16px 14px 40px}
+.summary{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:-2px;margin-bottom:16px}
+.stat{background:var(--card);padding:13px;min-width:0;border:1px solid var(--line);border-radius:16px;box-shadow:0 3px 12px #1f2b2606}.stat small{color:var(--muted);display:block;margin-bottom:8px}.stat strong{font-size:clamp(15px,4.5vw,20px);letter-spacing:-.04em;overflow-wrap:anywhere;word-break:keep-all}.stat.total{background:var(--mint);border-color:#d4e5d9}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:13px;min-width:0}.panel-head>div{min-width:0;flex:1}.panel-head h2{overflow-wrap:normal;word-break:keep-all}.panel-head .sub{word-break:keep-all}.panel h2{font-size:17px;margin:0}.sub{font-size:12px;color:var(--muted);margin-top:4px}
+label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:650}
+input,textarea,select{width:100%;min-width:0;border:1px solid #dce3dd;border-radius:11px;padding:12px;background:#fff;color:var(--ink);outline:none}
+input:focus,textarea:focus,select:focus{border-color:#69917c;box-shadow:0 0 0 3px #e7f1eb}
+textarea{resize:vertical;min-height:70px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.field{margin-bottom:11px}.full{grid-column:1/-1}
+.actions{display:flex;gap:8px;flex-wrap:wrap;min-width:0}.actions button{flex:1;min-width:0;padding-left:8px;padding-right:8px;font-size:13px}
+.account-list{display:flex;flex-direction:column;gap:9px}
+.account-card{border:1px solid var(--line);border-radius:14px;padding:11px;display:flex;align-items:flex-start;gap:8px;min-width:0;cursor:pointer}.account-card:focus-visible{outline:2px solid #69917c;outline-offset:2px}.account-main{min-width:0}.account-balance{max-width:38%;white-space:normal;overflow-wrap:anywhere}
+.account-card.active{border-color:#8fb09c;background:#f5faf6}.account-main{flex:1;min-width:0}.account-name{font-weight:750}.account-meta{font-size:12px;color:var(--muted);margin-top:4px;overflow-wrap:anywhere}.account-balance{font-weight:750;text-align:right;font-size:13px;white-space:nowrap}.account-actions{display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;width:100%;margin-top:9px}.account-card .mini{padding:6px 7px;font-size:11px;white-space:nowrap;margin:0}
+.pills{display:flex;gap:7px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:thin}.pill{white-space:nowrap;border-radius:999px;padding:9px 13px;background:#edf0ed;color:#536059;font-size:13px;border:1px solid transparent}.pill.active{background:var(--green);color:white}
+.month-row{display:flex;gap:7px;align-items:center;min-width:0}.month-row select{flex:1;min-width:0}.month-row button{flex:0 0 auto;font-size:12px;padding:10px 9px}
+.item-form{background:#f7f9f7;border-radius:14px;padding:12px;margin-bottom:14px}
+.item{display:grid;grid-template-columns:23px minmax(0,1fr) auto;align-items:start;column-gap:10px;padding:13px 0;border-bottom:1px solid var(--line)}.item:last-child{border-bottom:0}
+.check{appearance:none;width:23px;height:23px;flex:0 0 23px;border:1.5px solid #a8b5ac;border-radius:7px;margin-top:1px;position:relative;padding:0}
+.check:checked{background:var(--green);border-color:var(--green)}.check:checked:after{content:"✓";position:absolute;color:white;font-size:16px;left:4px;top:0}
+.item-body{min-width:0;grid-column:2;grid-row:1}.item-title{font-weight:700;overflow-wrap:anywhere}.item-note{font-size:12px;color:var(--muted);margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere}.item-side{grid-column:3;grid-row:1;display:flex;flex-direction:column;align-items:flex-end;gap:7px;min-width:0}.item-amount{font-weight:750;white-space:nowrap;text-align:right}.item.done .item-title,.item.done .item-amount{text-decoration:line-through;color:#98a19b}.item.done .item-note{color:#a7afa9}.item.done{background:#fafbfa}
+.item-buttons{display:flex;gap:5px;justify-content:flex-end;flex-wrap:nowrap;margin:0}.item-buttons button{padding:5px 8px;font-size:11px}
+.total-row{display:flex;justify-content:space-between;gap:10px;padding:13px 0;border-top:1px solid var(--line);font-size:13px}.total-row strong{font-size:17px}.total-row .muted{color:var(--muted)}
+.empty{padding:22px 10px;text-align:center;color:var(--muted);font-size:13px;line-height:1.7}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:4px 12px 24px;line-height:1.7}
+.notice{font-size:12px;background:#fff7e9;color:#855d24;border:1px solid #f1e0bd;padding:11px 12px;border-radius:12px;margin-bottom:14px;line-height:1.5}
+.item-form-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;background:transparent;color:var(--ink);padding:3px 0 8px;border-radius:0;font-size:16px}
+.item-form-toggle .chevron{font-size:18px;color:var(--muted);transition:transform .15s}
+.item-form-toggle[aria-expanded="true"] .chevron{transform:rotate(180deg)}
+.item-form-content{padding-top:10px}
+.hidden{display:none!important}
+@media(max-width:390px){main{padding-left:10px;padding-right:10px}.panel{padding:12px}.panel-head{gap:6px}.panel-head h2{font-size:15px}.panel-head .sub{font-size:11px}.panel-head>button{font-size:11px;padding:9px 7px}.stat{padding:11px}.stat small{font-size:11px}.stat strong{font-size:15px}.grid2{gap:8px}.account-card .mini{font-size:10px;padding:6px 5px}.account-balance{font-size:12px}.item{gap:7px}.item-amount{font-size:13px}}
+@media(min-width:620px){main{padding-top:22px}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}.two-col .panel{margin-bottom:14px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">MY PERSONAL BUDGET</div>
+  <button type="button" id="noticeTrigger" class="notice-trigger" aria-label="안내 및 개인정보 주의사항 보기" title="안내">!</button>
+</header>
+<div id="noticeModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="noticeTitle">
+  <div class="notice-modal">
+    <div class="notice-modal-head"><span id="noticeTitle">데이터 저장 안내</span><button type="button" id="closeNoticeBtn" class="secondary modal-close">닫기</button></div>
+    <p>이 사이트의 데이터는 현재 브라우저에만 저장돼요. 계좌 비밀번호나 인증정보는 입력하지 마세요. 브라우저 데이터 삭제 시 기록이 사라질 수 있으니 백업 기능을 이용해 주세요.</p>
+  </div>
+</div>
+<main>
+  <div class="summary">
+    <div class="stat total"><small>전체 남은 예정 지출</small><strong id="grandRemaining">₩0</strong></div>
+    <div class="stat"><small>전체 등록 지출</small><strong id="grandAll">₩0</strong></div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><div><h2>계좌 관리</h2><div class="sub">계좌를 선택하면 해당 계좌의 월별 예산이 보여요.</div></div><button id="newAccountBtn">＋ 계좌 추가</button></div>
+    <div id="accountForm" class="item-form hidden">
+      <div class="grid2">
+        <div class="field"><label for="accName">계좌명 *</label><input id="accName" placeholder="예: 생활비 통장"></div>
+        <div class="field"><label for="accNumber">계좌번호</label><input id="accNumber" placeholder="예: 123-****-4567" autocomplete="off"></div>
+        <div class="field full"><label for="accDesc">계좌 설명</label><textarea id="accDesc" placeholder="예: 매달 고정비와 생활비"></textarea></div>
+      </div>
+      <div class="actions"><button id="saveAccountBtn">저장</button><button class="secondary" id="cancelAccountBtn">취소</button></div>
+    </div>
+    <div id="accounts" class="account-list"></div>
+    <div id="accountEmpty" class="empty hidden">아직 계좌가 없어요.<br>‘계좌 추가’를 눌러 시작해 주세요.</div>
+  </section>
+
+  <section class="panel" id="budgetPanel">
+    <div class="panel-head"><div><h2 id="selectedAccountTitle">계좌를 선택해 주세요</h2><div class="sub" id="selectedAccountDesc"></div></div></div>
+    <div id="monthControls" class="hidden">
+      <div class="month-row">
+        <select id="monthSelect" aria-label="월별 예산 선택"></select>
+        <button id="addMonthBtn" class="secondary">＋ 월 추가</button>
+      </div>
+      <div id="monthPills" class="pills" style="margin-top:10px"></div>
+      <div class="actions" style="margin:0 0 12px">
+        <button id="copyPrevMonthBtn" class="secondary">전월 복사</button>
+        <button id="deleteMonthBtn" class="danger">월 예산 삭제</button>
+      </div>
+      <div class="summary" style="margin-top:8px">
+        <div class="stat total"><small>이 계좌 · 선택 월 남은 지출</small><strong id="monthRemaining">₩0</strong></div>
+        <div class="stat"><small>이 계좌 · 선택 월 전체 지출</small><strong id="monthAll">₩0</strong></div>
+      </div>
+      <div class="item-form" id="itemFormPanel">
+        <button type="button" id="itemFormToggle" class="item-form-toggle" aria-expanded="false" aria-controls="itemFormContent"><span id="itemFormTitle">지출 예정 추가</span><span class="chevron" aria-hidden="true">⌄</span></button>
+        <div id="itemFormContent" class="item-form-content hidden">
+          <div class="grid2">
+            <div class="field full"><label for="itemName">지출 항목 *</label><input id="itemName" placeholder="예: 관리비, 보험료, 여행 경비"></div>
+            <div class="field"><label for="itemAmount">금액(원) *</label><input id="itemAmount" type="text" inputmode="numeric" autocomplete="off" placeholder="예: 150,000"></div>
+            <div class="field"><label for="itemDate">예정일 (선택)</label><input id="itemDate" type="date"></div>
+            <div class="field full"><label for="itemNote">메모 (선택)</label><input id="itemNote" placeholder="예: 매월 25일 자동이체"></div>
+          </div>
+          <div class="actions"><button id="saveItemBtn">항목 추가</button><button id="cancelItemEditBtn" class="secondary hidden">수정 취소</button></div>
+        </div>
+      </div>
+      <div class="panel-head"><div><h2>지출 예정 항목</h2><div class="sub">체크하면 지출 완료 처리되고 남은 예정 합계에서 제외돼요.</div></div></div>
+      <div id="itemsList"></div>
+      <div class="total-row"><span class="muted">선택 월 합계 · 완료 포함</span><strong id="monthTotalBottom">₩0</strong></div>
+      <div class="total-row"><span>선택 월 남은 예정 지출</span><strong id="monthRemainingBottom">₩0</strong></div>
+    </div>
+    <div id="noAccount" class="empty">먼저 위에서 계좌를 추가해 주세요.</div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><h2>데이터 백업</h2><div class="sub">휴대폰을 바꾸거나 브라우저 데이터를 지우기 전에 저장하세요.</div></div></div>
+    <div class="actions"><button id="exportBtn">백업 파일 저장</button><button id="importBtn" class="secondary">백업 불러오기</button><input id="importFile" type="file" accept="application/json,.json" class="hidden"></div>
+    <div class="sub" style="margin-top:10px">백업 파일에는 입력한 계좌 정보와 예산 내역이 포함됩니다. 안전한 곳에 보관해 주세요.</div>
+  </section>
+</main>
+<footer>내 예산 관리 · 개인 기기용<br>은행 계좌와 자동 연동되지 않으며, 입력한 내용만 관리합니다.</footer>
+<script>
+(() => {
+  const KEY = 'myBudgetManager_v1';
+  let data = {accounts:[], selectedAccountId:null, selectedMonthId:null};
+  let editingAccountId = null, editingItemId = null;
+  const $ = id => document.getElementById(id);
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+  const won = n => '₩' + (Number(n)||0).toLocaleString('ko-KR');
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch(e) { alert('저장 공간에 문제가 있어 저장하지 못했어요. 백업 후 다시 시도해 주세요.'); } };
+  const currentAccount = () => data.accounts.find(a=>a.id===data.selectedAccountId) || null;
+  const currentMonth = () => { const a=currentAccount(); return a ? a.months.find(m=>m.id===data.selectedMonthId) || null : null; };
+  const isDone = item => item.done === true || item.done === 'true' || item.done === 1;
+  const sortItemsByCompletion = items => items.sort((a,b)=>Number(isDone(a))-Number(isDone(b)));
+  const sums = items => ({all:items.reduce((s,i)=>s+Number(i.amount||0),0), remaining:items.reduce((s,i)=>s+(isDone(i)?0:Number(i.amount||0)),0)});
+  const esc = s => String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function setItemFormOpen(open){$('itemFormContent').classList.toggle('hidden',!open);$('itemFormToggle').setAttribute('aria-expanded',String(open));}
+  $('itemFormToggle').onclick=()=>setItemFormOpen($('itemFormContent').classList.contains('hidden'));
+  $('noticeTrigger').onclick=()=>{$('noticeModal').classList.remove('hidden');$('closeNoticeBtn').focus();};
+  $('closeNoticeBtn').onclick=()=>$('noticeModal').classList.add('hidden');
+  $('noticeModal').onclick=e=>{if(e.target===$('noticeModal'))$('noticeModal').classList.add('hidden');};
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')$('noticeModal').classList.add('hidden');});
+  function render() {
+    const allItems = data.accounts.flatMap(a=>a.months.flatMap(m=>m.items));
+    const overall=sums(allItems);
+    $('grandRemaining').textContent=won(overall.remaining); $('grandAll').textContent=won(overall.all);
+    $('accounts').innerHTML='';
+    $('accountEmpty').classList.toggle('hidden',data.accounts.length>0);
+    data.accounts.forEach(a=>{
+      const items=a.months.flatMap(m=>m.items), total=sums(items);
+      const el=document.createElement('div'); el.className='account-card'+(a.id===data.selectedAccountId?' active':''); el.tabIndex=0; el.setAttribute('role','button'); el.setAttribute('aria-label',`${a.name} 계좌 보기`);
+      el.innerHTML=`<div class="account-main"><div class="account-name">${esc(a.name)}</div><div class="account-meta">${a.number?esc(a.number)+' · ':''}${esc(a.description||'월 '+a.months.length+'개')}</div><div class="account-actions"><button class="mini secondary edit-account" data-id="${a.id}">수정</button><button class="mini danger delete-account" data-id="${a.id}">삭제</button></div></div><div class="account-balance">${won(total.remaining)}<div class="sub">남은 지출</div></div>`;
+      const selectThisAccount=()=>{data.selectedAccountId=a.id;data.selectedMonthId=a.months[0]?.id||null;editingItemId=null;resetItemForm();save();render();};
+      el.addEventListener('click',e=>{if(!e.target.closest('button'))selectThisAccount();});
+      el.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();selectThisAccount();}});
+      $('accounts').appendChild(el);
+    });
+    document.querySelectorAll('.edit-account').forEach(b=>b.onclick=e=>{e.stopPropagation();openAccountForm(b.dataset.id);});
+    document.querySelectorAll('.delete-account').forEach(b=>b.onclick=e=>{e.stopPropagation();const a=data.accounts.find(x=>x.id===b.dataset.id);if(confirm(`‘${a.name}’ 계좌와 모든 월별 내역을 삭제할까요?`)){data.accounts=data.accounts.filter(x=>x.id!==a.id);if(data.selectedAccountId===a.id){data.selectedAccountId=data.accounts[0]?.id||null;data.selectedMonthId=currentAccount()?.months[0]?.id||null;}save();render();}});
+    const a=currentAccount();
+    $('noAccount').classList.toggle('hidden',!!a); $('monthControls').classList.toggle('hidden',!a);
+    $('selectedAccountTitle').textContent=a?a.name:'계좌를 선택해 주세요';
+    $('selectedAccountDesc').textContent=a?[a.number||'',a.description||''].filter(Boolean).join(' · '):'';
+    if(!a){$('monthPills').innerHTML='';$('monthSelect').innerHTML='';$('itemsList').innerHTML='';return;}
+    if(!a.months.length){a.months.push({id:uid(),name:defaultMonthName(),items:[]});data.selectedMonthId=a.months[0].id;save();}
+    if(!a.months.some(m=>m.id===data.selectedMonthId))data.selectedMonthId=a.months[0].id;
+    $('monthSelect').innerHTML=a.months.map(m=>`<option value="${m.id}" ${m.id===data.selectedMonthId?'selected':''}>${esc(m.name)}</option>`).join('');
+    $('monthPills').innerHTML=a.months.map(m=>`<button class="pill ${m.id===data.selectedMonthId?'active':''}" data-id="${m.id}">${esc(m.name)}</button>`).join('');
+    document.querySelectorAll('#monthPills .pill').forEach(b=>b.onclick=()=>{data.selectedMonthId=b.dataset.id;editingItemId=null;resetItemForm();save();render();});
+    const m=currentMonth(); if(!m)return;
+    const s=sums(m.items);
+    $('monthRemaining').textContent=won(s.remaining);$('monthAll').textContent=won(s.all);
+    $('monthTotalBottom').textContent=won(s.all);$('monthRemainingBottom').textContent=won(s.remaining);
+    $('itemsList').innerHTML='';
+    if(!m.items.length){$('itemsList').innerHTML='<div class="empty">아직 등록된 지출 항목이 없어요.<br>위에서 첫 항목을 추가해 주세요.</div>';}
+    // 미완료 항목을 먼저 보여주고, 완료 항목은 목록 맨 아래에 배치합니다.
+    sortItemsByCompletion(m.items).forEach(item=>{
+      const el=document.createElement('div');el.className='item'+(isDone(item)?' done':'');
+      el.innerHTML=`<input class="check" type="checkbox" aria-label="지출 완료" data-id="${item.id}" ${isDone(item)?'checked':''}><div class="item-body"><div class="item-title">${esc(item.name)}</div>${item.date?`<div class="item-note">예정일: ${esc(item.date)}</div>`:''}${item.note?`<div class="item-note">${esc(item.note)}</div>`:''}</div><div class="item-side"><div class="item-amount">${won(item.amount)}</div><div class="item-buttons"><button class="secondary edit-item" data-id="${item.id}">수정</button><button class="danger delete-item" data-id="${item.id}">삭제</button></div></div>`;
+      $('itemsList').appendChild(el);
+    });
+    document.querySelectorAll('.check').forEach(c=>c.onchange=()=>{const month=currentMonth();if(!month)return;const index=month.items.findIndex(i=>i.id===c.dataset.id);if(index<0)return;const [item]=month.items.splice(index,1);item.done=c.checked;if(c.checked){/* 완료로 바꾸면 완료 그룹의 맨 아래로 */month.items.push(item);}else{/* 완료를 해제하면 미완료 그룹의 맨 아래로, 완료 그룹 앞에 배치 */const firstDone=month.items.findIndex(i=>isDone(i));if(firstDone<0)month.items.push(item);else month.items.splice(firstDone,0,item);}sortItemsByCompletion(month.items);save();render();});
+    document.querySelectorAll('.edit-item').forEach(b=>b.onclick=()=>editItem(b.dataset.id));
+    document.querySelectorAll('.delete-item').forEach(b=>b.onclick=()=>{if(confirm('이 지출 항목을 삭제할까요?')){m.items=m.items.filter(i=>i.id!==b.dataset.id);save();render();}});
+  }
+  function defaultMonthName(){const d=new Date();return `${d.getFullYear()}년 ${d.getMonth()+1}월 예산`;}
+  function openAccountForm(id=null){
+    editingAccountId=id;const a=data.accounts.find(x=>x.id===id);
+    $('accountForm').classList.remove('hidden');
+    $('accName').value=a?.name||'';$('accNumber').value=a?.number||'';$('accDesc').value=a?.description||'';
+    $('saveAccountBtn').textContent=id?'계좌 수정 저장':'계좌 저장';$('accName').focus();
+  }
+  function closeAccountForm(){$('accountForm').classList.add('hidden');editingAccountId=null;}
+  $('newAccountBtn').onclick=()=>openAccountForm();
+  $('cancelAccountBtn').onclick=closeAccountForm;
+  $('saveAccountBtn').onclick=()=>{
+    const name=$('accName').value.trim();if(!name){alert('계좌명을 입력해 주세요.');$('accName').focus();return;}
+    const values={name,number:$('accNumber').value.trim(),description:$('accDesc').value.trim()};
+    if(editingAccountId){Object.assign(data.accounts.find(a=>a.id===editingAccountId),values);}
+    else{const a={id:uid(),...values,months:[{id:uid(),name:defaultMonthName(),items:[]}]};data.accounts.push(a);data.selectedAccountId=a.id;data.selectedMonthId=a.months[0].id;}
+    closeAccountForm();save();render();
+  };
+  $('addMonthBtn').onclick=()=>{
+    const a=currentAccount();if(!a)return;
+    const suggested=defaultMonthName();const name=prompt('월별 예산 이름을 입력해 주세요.',suggested);
+    if(name===null)return;if(!name.trim()){alert('월별 예산 이름을 입력해 주세요.');return;}
+    const existing=a.months.find(m=>m.name.toLowerCase()===name.trim().toLowerCase());
+    if(existing){data.selectedMonthId=existing.id;alert('같은 이름의 월 예산이 있어 해당 월을 선택했어요.');}
+    else{const m={id:uid(),name:name.trim(),items:[]};a.months.unshift(m);data.selectedMonthId=m.id;}
+    editingItemId=null;resetItemForm();save();render();
+  };
+  function resetItemForm(){$('itemName').value='';$('itemAmount').value='';$('itemDate').value='';$('itemNote').value='';$('itemFormTitle').textContent='지출 예정 추가';$('saveItemBtn').textContent='항목 추가';$('cancelItemEditBtn').classList.add('hidden');editingItemId=null;}
+  function editItem(id){const item=currentMonth().items.find(i=>i.id===id);if(!item)return;setItemFormOpen(true);editingItemId=id;$('itemName').value=item.name;$('itemAmount').value=Number(item.amount||0).toLocaleString('ko-KR');$('itemDate').value=item.date||'';$('itemNote').value=item.note||'';$('itemFormTitle').textContent='지출 항목 수정';$('saveItemBtn').textContent='수정 저장';$('cancelItemEditBtn').classList.remove('hidden');$('itemName').focus();window.scrollTo({top:$('itemFormTitle').getBoundingClientRect().top+window.scrollY-100,behavior:'smooth'});}
+  $('itemAmount').addEventListener('input',e=>{
+    const input=e.target, start=input.selectionStart, oldValue=input.value, digits=oldValue.replace(/[^0-9]/g,'');
+    const formatted=digits?Number(digits).toLocaleString('ko-KR'):'';
+    const commasBefore=(oldValue.slice(0,start).match(/,/g)||[]).length;
+    input.value=formatted;
+    const digitsBefore=oldValue.slice(0,start).replace(/[^0-9]/g,'').length;
+    let pos=0, seen=0;
+    while(pos<formatted.length&&seen<digitsBefore){if(/[0-9]/.test(formatted[pos]))seen++;pos++;}
+    if(digitsBefore===0)pos=0;
+    input.setSelectionRange(pos,pos);
+  });
+  $('saveItemBtn').onclick=()=>{
+    const name=$('itemName').value.trim(), amountText=$('itemAmount').value.replace(/,/g,'').trim(), amount=amountText;
+    if(!name){alert('지출 항목을 입력해 주세요.');$('itemName').focus();return;}
+    if(amount===''||!Number.isFinite(Number(amount))||Number(amount)<0){alert('금액을 0원 이상으로 입력해 주세요.');$('itemAmount').focus();return;}
+    const values={name,amount:Math.round(Number(amount)),date:$('itemDate').value,note:$('itemNote').value.trim()};
+    const m=currentMonth();if(!m)return;
+    if(editingItemId){Object.assign(m.items.find(i=>i.id===editingItemId),values);}
+    else m.items.push({id:uid(),...values,done:false});
+    resetItemForm();save();render();
+  };
+  $('cancelItemEditBtn').onclick=resetItemForm;
+  $('monthSelect').onchange=()=>{data.selectedMonthId=$('monthSelect').value;resetItemForm();save();render();};
+  $('copyPrevMonthBtn').onclick=()=>{
+    const a=currentAccount(), m=currentMonth(); if(!a||!m)return;
+    const idx=a.months.findIndex(x=>x.id===m.id);
+    if(idx<0||idx===a.months.length-1){alert('복사할 직전 월 예산이 없어요. 월 목록에서 직전 월을 먼저 만들어 주세요.');return;}
+    const prev=a.months[idx+1];
+    if(!confirm(`‘${prev.name}’의 지출 항목을 ‘${m.name}’으로 복사할까요?\n완료 여부는 미완료 상태로 초기화됩니다.`))return;
+    m.items=prev.items.map(i=>({id:uid(),name:i.name,amount:Number(i.amount)||0,date:i.date||'',note:i.note||'',done:false}));
+    save();render();alert('전월 항목을 복사했어요.');
+  };
+  $('deleteMonthBtn').onclick=()=>{
+    const a=currentAccount(),m=currentMonth();if(!a||!m)return;
+    if(!confirm(`‘${m.name}’의 모든 지출 항목을 삭제하고 월 예산도 삭제할까요? 이 작업은 되돌릴 수 없어요.`))return;
+    a.months=a.months.filter(x=>x.id!==m.id);
+    if(!a.months.length)a.months.push({id:uid(),name:defaultMonthName(),items:[]});
+    data.selectedMonthId=a.months[0].id;resetItemForm();save();render();
+  };
+  $('exportBtn').onclick=()=>{
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`내예산백업_${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  };
+  $('importBtn').onclick=()=>$('importFile').click();
+  $('importFile').onchange=async e=>{
+    const f=e.target.files[0];if(!f)return;
+    try{const parsed=JSON.parse(await f.text());if(!parsed||!Array.isArray(parsed.accounts))throw new Error('형식 오류');
+      if(confirm('현재 예산 데이터를 백업 파일 내용으로 교체할까요?')){data=parsed;if(!data.accounts.some(a=>a.id===data.selectedAccountId))data.selectedAccountId=data.accounts[0]?.id||null;const a=currentAccount();if(a&&!a.months.some(m=>m.id===data.selectedMonthId))data.selectedMonthId=a.months[0]?.id||null;save();render();alert('백업을 불러왔어요.');}
+    }catch(err){alert('올바른 예산 백업 파일이 아니에요.');}e.target.value='';
+  };
+  try{const raw=localStorage.getItem(KEY);if(raw){const parsed=JSON.parse(raw);if(parsed&&Array.isArray(parsed.accounts))data=parsed;}}catch(e){}
+  if(data.accounts.length&&!data.selectedAccountId)data.selectedAccountId=data.accounts[0].id;
+  if(currentAccount()&&!data.selectedMonthId)data.selectedMonthId=currentAccount().months[0]?.id||null;
+  render();
+})();
+</script>
+</body>
+</html>
