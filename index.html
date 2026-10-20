@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#253b35">
 <title>My Personal Budget</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
 <style>
 :root{--bg:#f4f6f3;--card:#fff;--ink:#1f2b26;--muted:#77817b;--line:#e3e8e3;--green:#2d5948;--mint:#e7f1eb;--orange:#b86b35;--red:#b34e4e}
 *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif;font-size:15px}
@@ -39,7 +41,7 @@ textarea{resize:vertical;min-height:70px}
 .item{display:grid;grid-template-columns:23px minmax(0,1fr) auto;align-items:start;column-gap:10px;padding:13px 0;border-bottom:1px solid var(--line)}.item:last-child{border-bottom:0}
 .check{appearance:none;width:23px;height:23px;flex:0 0 23px;border:1.5px solid #a8b5ac;border-radius:7px;margin-top:1px;position:relative;padding:0}
 .check:checked{background:var(--green);border-color:var(--green)}.check:checked:after{content:"✓";position:absolute;color:white;font-size:16px;left:4px;top:0}
-.item-body{min-width:0;grid-column:2;grid-row:1}.item-title{font-weight:700;overflow-wrap:anywhere}.item-note{font-size:12px;color:var(--muted);margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere}.item-side{grid-column:3;grid-row:1;display:flex;flex-direction:column;align-items:flex-end;gap:7px;min-width:0}.item-amount{font-weight:750;white-space:nowrap;text-align:right}.item.done .item-title,.item.done .item-amount{text-decoration:line-through;color:#98a19b}.item.done .item-note{color:#a7afa9}.item.done{background:#fafbfa}
+.item-body{min-width:0;grid-column:2;grid-row:1}.item-title{font-weight:700;overflow-wrap:anywhere;display:flex;align-items:flex-start;gap:6px}.overdue-mark{display:inline-flex;flex:0 0 17px;width:17px;height:17px;align-items:center;justify-content:center;border-radius:50%;background:#c93636;color:#fff;font-size:12px;font-weight:800;line-height:1;margin-top:1px}.item-note{font-size:12px;color:var(--muted);margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere}.item-side{grid-column:3;grid-row:1;display:flex;flex-direction:column;align-items:flex-end;gap:7px;min-width:0}.item-amount{font-weight:750;white-space:nowrap;text-align:right}.item.done .item-title,.item.done .item-amount{text-decoration:line-through;color:#98a19b}.item.done .item-note{color:#a7afa9}.item.done{background:#fafbfa}
 .item-buttons{display:flex;gap:5px;justify-content:flex-end;flex-wrap:nowrap;margin:0}.item-buttons button{padding:5px 8px;font-size:11px}
 .total-row{display:flex;justify-content:space-between;gap:10px;padding:13px 0;border-top:1px solid var(--line);font-size:13px}.total-row strong{font-size:17px}.total-row .muted{color:var(--muted)}
 .empty{padding:22px 10px;text-align:center;color:var(--muted);font-size:13px;line-height:1.7}
@@ -53,10 +55,6 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:4px 12px 24px
 @media(max-width:390px){main{padding-left:10px;padding-right:10px}.panel{padding:12px}.panel-head{gap:6px}.panel-head h2{font-size:15px}.panel-head .sub{font-size:11px}.panel-head>button{font-size:11px;padding:9px 7px}.stat{padding:11px}.stat small{font-size:11px}.stat strong{font-size:15px}.grid2{gap:8px}.account-card .mini{font-size:10px;padding:6px 5px}.account-balance{font-size:12px}.item{gap:7px}.item-amount{font-size:13px}}
 @media(min-width:620px){main{padding-top:22px}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}.two-col .panel{margin-bottom:14px}}
 </style>
-
-<link rel="manifest" href="./manifest.json">
-<link rel="icon" href="./icons/icon-192.png" type="image/png">
-<link rel="apple-touch-icon" href="./icons/icon-192.png">
 </head>
 <body>
 <header>
@@ -144,6 +142,16 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:4px 12px 24px
   const currentAccount = () => data.accounts.find(a=>a.id===data.selectedAccountId) || null;
   const currentMonth = () => { const a=currentAccount(); return a ? a.months.find(m=>m.id===data.selectedMonthId) || null : null; };
   const isDone = item => item.done === true || item.done === 'true' || item.done === 1;
+  const todayLocal = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+  const isOverdue = item => !!item.date && item.date < todayLocal() && !isDone(item);
+  function shiftDateByOneMonth(dateStr){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(dateStr||''))return dateStr||'';
+    const [year,month,day]=dateStr.split('-').map(Number);
+    const targetFirst=new Date(year,month,1);
+    const lastDay=new Date(targetFirst.getFullYear(),targetFirst.getMonth()+1,0).getDate();
+    const shiftedDay=Math.min(day,lastDay);
+    return `${targetFirst.getFullYear()}-${String(targetFirst.getMonth()+1).padStart(2,'0')}-${String(shiftedDay).padStart(2,'0')}`;
+  }
   const sortItemsByCompletion = items => items.sort((a,b)=>Number(isDone(a))-Number(isDone(b)));
   const sums = items => ({all:items.reduce((s,i)=>s+Number(i.amount||0),0), remaining:items.reduce((s,i)=>s+(isDone(i)?0:Number(i.amount||0)),0)});
   const esc = s => String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -189,7 +197,8 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:4px 12px 24px
     // 미완료 항목을 먼저 보여주고, 완료 항목은 목록 맨 아래에 배치합니다.
     sortItemsByCompletion(m.items).forEach(item=>{
       const el=document.createElement('div');el.className='item'+(isDone(item)?' done':'');
-      el.innerHTML=`<input class="check" type="checkbox" aria-label="지출 완료" data-id="${item.id}" ${isDone(item)?'checked':''}><div class="item-body"><div class="item-title">${esc(item.name)}</div>${item.date?`<div class="item-note">예정일: ${esc(item.date)}</div>`:''}${item.note?`<div class="item-note">${esc(item.note)}</div>`:''}</div><div class="item-side"><div class="item-amount">${won(item.amount)}</div><div class="item-buttons"><button class="secondary edit-item" data-id="${item.id}">수정</button><button class="danger delete-item" data-id="${item.id}">삭제</button></div></div>`;
+      const overdue=isOverdue(item);
+      el.innerHTML=`<input class="check" type="checkbox" aria-label="지출 완료" data-id="${item.id}" ${isDone(item)?'checked':''}><div class="item-body"><div class="item-title">${overdue?'<span class="overdue-mark" role="img" aria-label="예정일 지남, 미완료" title="예정일이 지났지만 아직 완료되지 않았어요">!</span>':''}<span>${esc(item.name)}</span></div>${item.date?`<div class="item-note">예정일: ${esc(item.date)}${overdue?' · 예정일 지남':''}</div>`:''}${item.note?`<div class="item-note">${esc(item.note)}</div>`:''}</div><div class="item-side"><div class="item-amount">${won(item.amount)}</div><div class="item-buttons"><button class="secondary edit-item" data-id="${item.id}">수정</button><button class="danger delete-item" data-id="${item.id}">삭제</button></div></div>`;
       $('itemsList').appendChild(el);
     });
     document.querySelectorAll('.check').forEach(c=>c.onchange=()=>{const month=currentMonth();if(!month)return;const index=month.items.findIndex(i=>i.id===c.dataset.id);if(index<0)return;const [item]=month.items.splice(index,1);item.done=c.checked;if(c.checked){/* 완료로 바꾸면 완료 그룹의 맨 아래로 */month.items.push(item);}else{/* 완료를 해제하면 미완료 그룹의 맨 아래로, 완료 그룹 앞에 배치 */const firstDone=month.items.findIndex(i=>isDone(i));if(firstDone<0)month.items.push(item);else month.items.splice(firstDone,0,item);}sortItemsByCompletion(month.items);save();render();});
@@ -253,7 +262,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:4px 12px 24px
     if(idx<0||idx===a.months.length-1){alert('복사할 직전 월 예산이 없어요. 월 목록에서 직전 월을 먼저 만들어 주세요.');return;}
     const prev=a.months[idx+1];
     if(!confirm(`‘${prev.name}’의 지출 항목을 ‘${m.name}’으로 복사할까요?\n완료 여부는 미완료 상태로 초기화됩니다.`))return;
-    m.items=prev.items.map(i=>({id:uid(),name:i.name,amount:Number(i.amount)||0,date:i.date||'',note:i.note||'',done:false}));
+    m.items=prev.items.map(i=>({id:uid(),name:i.name,amount:Number(i.amount)||0,date:shiftDateByOneMonth(i.date||''),note:i.note||'',done:false}));
     save();render();alert('전월 항목을 복사했어요.');
   };
   $('deleteMonthBtn').onclick=()=>{
