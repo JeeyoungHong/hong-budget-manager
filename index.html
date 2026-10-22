@@ -47,6 +47,7 @@ textarea{resize:vertical;min-height:70px}
 .empty{padding:22px 10px;text-align:center;color:var(--muted);font-size:13px;line-height:1.7}
 footer{text-align:center;color:var(--muted);font-size:11px;padding:4px 12px 24px;line-height:1.7}
 .notice{font-size:12px;background:#fff7e9;color:#855d24;border:1px solid #f1e0bd;padding:11px 12px;border-radius:12px;margin-bottom:14px;line-height:1.5}
+.items-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}.items-head>div{min-width:0}.items-search-toggle{flex:0 0 auto;padding:8px 10px;font-size:13px}.items-search{display:flex;gap:7px;margin:-3px 0 12px}.items-search input{flex:1}.items-search button{flex:0 0 auto}
 .item-form-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;background:transparent;color:var(--ink);padding:3px 0 8px;border-radius:0;font-size:16px}
 .item-form-toggle .chevron{font-size:18px;color:var(--muted);transition:transform .15s}
 .item-form-toggle[aria-expanded="true"] .chevron{transform:rotate(180deg)}
@@ -115,7 +116,8 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:4px 12px 24px
           <div class="actions"><button id="saveItemBtn">항목 추가</button><button id="cancelItemEditBtn" class="secondary hidden">수정 취소</button></div>
         </div>
       </div>
-      <div class="panel-head"><div><h2>지출 예정 항목</h2><div class="sub">체크하면 지출 완료 처리되고 남은 예정 합계에서 제외돼요.</div></div></div>
+      <div class="panel-head items-head"><div><h2>지출 예정 항목</h2><div class="sub">체크하면 지출 완료 처리되고 남은 예정 합계에서 제외돼요.</div></div><button type="button" id="itemSearchToggle" class="secondary items-search-toggle" aria-expanded="false">⌕ 검색</button></div>
+      <form id="itemSearchForm" class="items-search hidden"><input id="itemSearchInput" type="search" placeholder="지출 항목명 검색" aria-label="지출 항목명 검색"><button type="submit">검색</button></form>
       <div id="itemsList"></div>
       <div class="total-row"><span class="muted">선택 월 합계 · 완료 포함</span><strong id="monthTotalBottom">₩0</strong></div>
       <div class="total-row"><span>선택 월 남은 예정 지출</span><strong id="monthRemainingBottom">₩0</strong></div>
@@ -134,6 +136,8 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:4px 12px 24px
 (() => {
   const KEY = 'myBudgetManager_v1';
   let data = {accounts:[], selectedAccountId:null, selectedMonthId:null};
+  let itemSearchOpen = false;
+  let itemSearchTerm = '';
   let editingAccountId = null, editingItemId = null;
   const $ = id => document.getElementById(id);
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
@@ -193,9 +197,16 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:4px 12px 24px
     $('monthRemaining').textContent=won(s.remaining);$('monthAll').textContent=won(s.all);
     $('monthTotalBottom').textContent=won(s.all);$('monthRemainingBottom').textContent=won(s.remaining);
     $('itemsList').innerHTML='';
+    const searchForm=$('itemSearchForm'), searchToggle=$('itemSearchToggle'), searchInput=$('itemSearchInput');
+    searchForm.classList.toggle('hidden',!itemSearchOpen);
+    searchToggle.setAttribute('aria-expanded',String(itemSearchOpen));
+    searchToggle.textContent=itemSearchOpen?'✕ 닫기':'⌕ 검색';
+    searchInput.value=itemSearchTerm;
+    const visibleItems=m.items.filter(item=>item.name.toLocaleLowerCase().includes(itemSearchTerm.trim().toLocaleLowerCase()));
     if(!m.items.length){$('itemsList').innerHTML='<div class="empty">아직 등록된 지출 항목이 없어요.<br>위에서 첫 항목을 추가해 주세요.</div>';}
+    else if(!visibleItems.length){$('itemsList').innerHTML='<div class="empty">검색 결과가 없어요.</div>';}
     // 미완료 항목을 먼저 보여주고, 완료 항목은 목록 맨 아래에 배치합니다.
-    sortItemsByCompletion(m.items).forEach(item=>{
+    sortItemsByCompletion(visibleItems).forEach(item=>{
       const el=document.createElement('div');el.className='item'+(isDone(item)?' done':'');
       const overdue=isOverdue(item);
       el.innerHTML=`<input class="check" type="checkbox" aria-label="지출 완료" data-id="${item.id}" ${isDone(item)?'checked':''}><div class="item-body"><div class="item-title">${overdue?'<span class="overdue-mark" role="img" aria-label="예정일 지남, 미완료" title="예정일이 지났지만 아직 완료되지 않았어요">!</span>':''}<span>${esc(item.name)}</span></div>${item.date?`<div class="item-note">예정일: ${esc(item.date)}${overdue?' · 예정일 지남':''}</div>`:''}${item.note?`<div class="item-note">${esc(item.note)}</div>`:''}</div><div class="item-side"><div class="item-amount">${won(item.amount)}</div><div class="item-buttons"><button class="secondary edit-item" data-id="${item.id}">수정</button><button class="danger delete-item" data-id="${item.id}">삭제</button></div></div>`;
@@ -255,6 +266,8 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:4px 12px 24px
     resetItemForm();save();render();
   };
   $('cancelItemEditBtn').onclick=resetItemForm;
+  $('itemSearchToggle').onclick=()=>{itemSearchOpen=!itemSearchOpen;if(!itemSearchOpen){itemSearchTerm='';$('itemSearchInput').value='';}render();if(itemSearchOpen)$('itemSearchInput').focus();};
+  $('itemSearchForm').onsubmit=e=>{e.preventDefault();itemSearchTerm=$('itemSearchInput').value.trim();render();$('itemSearchInput').focus();};
   $('monthSelect').onchange=()=>{data.selectedMonthId=$('monthSelect').value;resetItemForm();save();render();};
   $('copyPrevMonthBtn').onclick=()=>{
     const a=currentAccount(), m=currentMonth(); if(!a||!m)return;
