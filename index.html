@@ -133,7 +133,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:4px 12px 24px
   let data = {accounts:[], selectedAccountId:null, selectedMonthId:null};
   let itemSearchOpen = false;
   let itemSearchTerm = '';
-  let itemDateSortEnabled = false;
+  let itemDateSortEnabled = localStorage.getItem('myBudgetManager_dateSortEnabled') === 'true';
   let editingAccountId = null, editingItemId = null;
   const $ = id => document.getElementById(id);
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
@@ -278,7 +278,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:4px 12px 24px
   $('cancelItemEditBtn').onclick=resetItemForm;
   $('itemSearchToggle').onclick=()=>{itemSearchOpen=!itemSearchOpen;if(!itemSearchOpen){itemSearchTerm='';$('itemSearchInput').value='';}render();if(itemSearchOpen)$('itemSearchInput').focus();};
   $('itemSearchForm').onsubmit=e=>{e.preventDefault();itemSearchTerm=$('itemSearchInput').value.trim();render();$('itemSearchInput').focus();};
-  $('itemSortToggle').onclick=()=>{itemDateSortEnabled=!itemDateSortEnabled;render();};
+  $('itemSortToggle').onclick=()=>{itemDateSortEnabled=!itemDateSortEnabled;localStorage.setItem('myBudgetManager_dateSortEnabled',String(itemDateSortEnabled));render();};
   $('monthSelect').onchange=()=>{data.selectedMonthId=$('monthSelect').value;resetItemForm();save();render();};
   $('copyPrevMonthBtn').onclick=()=>{
     const a=currentAccount(), m=currentMonth(); if(!a||!m)return;
